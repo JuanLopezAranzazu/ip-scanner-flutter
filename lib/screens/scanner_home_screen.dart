@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/device_info.dart';
 import '../services/network_scanner.dart';
 import '../widgets/device_tile.dart';
+import 'device_detail_screen.dart';
 
 class ScannerHomeScreen extends StatefulWidget {
   const ScannerHomeScreen({super.key});
@@ -35,7 +36,6 @@ class _ScannerHomeScreenState extends State<ScannerHomeScreen> {
         setState(() => _devices.add(device));
       }
 
-      // Ordenamos por IP al terminar, para que la lista quede prolija.
       setState(() {
         _devices.sort((a, b) {
           final aLast = int.tryParse(a.ip.split('.').last) ?? 0;
@@ -48,6 +48,18 @@ class _ScannerHomeScreenState extends State<ScannerHomeScreen> {
     } finally {
       setState(() => _scanning = false);
     }
+  }
+
+  void _openDetail(DeviceInfo device) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DeviceDetailScreen(
+          device: device,
+          isThisDevice: device.ip == _localIP,
+        ),
+      ),
+    );
   }
 
   @override
@@ -101,6 +113,7 @@ class _ScannerHomeScreenState extends State<ScannerHomeScreen> {
                       return DeviceTile(
                         device: device,
                         isThisDevice: device.ip == _localIP,
+                        onTap: () => _openDetail(device),
                       );
                     },
                   ),
