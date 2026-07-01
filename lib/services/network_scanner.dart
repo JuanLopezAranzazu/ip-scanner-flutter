@@ -75,9 +75,13 @@ class NetworkScanner {
   ///
   /// Emite un [DeviceInfo] por cada dispositivo encontrado, a medida que
   /// se van detectando (no espera a terminar todo el escaneo).
+  ///
+  /// [onProgress] se llama después de revisar cada IP (encuentre o no un
+  /// dispositivo), útil para alimentar una barra de progreso real.
   Stream<DeviceInfo> scanNetwork({
     Duration timeout = const Duration(milliseconds: 500),
-    int concurrency = 24,
+    int concurrency = 40,
+    void Function(int completed, int total)? onProgress,
   }) async* {
     final prefix = await getSubnetPrefix();
     if (prefix == null) {
@@ -89,22 +93,42 @@ class NetworkScanner {
     final controller = StreamController<DeviceInfo>();
     final ips = List.generate(254, (i) => '$prefix.${i + 1}');
 
-    unawaited(_runInBatches(ips, concurrency, timeout, controller));
+    unawaited(
+        _runWithWorkerPool(ips, concurrency, timeout, controller, onProgress));
 
     yield* controller.stream;
   }
 
-  Future<void> _runInBatches(
+  /// Escanea usando un "pool" de N workers que toman la siguiente IP tan
+  /// pronto terminan la anterior, en vez de esperar a que todo un lote
+  /// termine (como haría `Future.wait` por bloques). Esto mantiene la
+  /// concurrencia siempre al máximo y hace que el progreso avance de forma
+  /// continua en vez de "a saltos" cuando una IP lenta atasca un lote
+  /// completo.
+  Future<void> _runWithWorkerPool(
     List<String> ips,
     int concurrency,
     Duration timeout,
     StreamController<DeviceInfo> controller,
+    void Function(int completed, int total)? onProgress,
   ) async {
-    for (var i = 0; i < ips.length; i += concurrency) {
-      final batch = ips.skip(i).take(concurrency);
-      await Future.wait(
-          batch.map((ip) => _scanSingleHost(ip, timeout, controller)));
+    final total = ips.length;
+    var nextIndex = 0;
+    var completed = 0;
+
+    Future<void> worker() async {
+      while (true) {
+        if (nextIndex >= ips.length) return;
+        final ip = ips[nextIndex++];
+        await _scanSingleHost(ip, timeout, controller);
+        completed++;
+        onProgress?.call(completed, total);
+        await Future.delayed(const Duration(milliseconds: 1));
+      }
     }
+
+    final workerCount = concurrency.clamp(1, ips.length);
+    await Future.wait(List.generate(workerCount, (_) => worker()));
     await controller.close();
   }
 

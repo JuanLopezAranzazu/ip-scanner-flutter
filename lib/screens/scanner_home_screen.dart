@@ -20,19 +20,29 @@ class _ScannerHomeScreenState extends State<ScannerHomeScreen> {
   String? _subnet;
   String? _localIP;
   String? _error;
+  int _scannedCount = 0;
+  int _totalToScan = 254;
 
   Future<void> _startScan() async {
     setState(() {
       _devices.clear();
       _scanning = true;
       _error = null;
+      _scannedCount = 0;
     });
 
     try {
       _subnet = await _scanner.getSubnetPrefix();
       _localIP = await _scanner.getLocalIP();
 
-      await for (final device in _scanner.scanNetwork()) {
+      await for (final device in _scanner.scanNetwork(
+        onProgress: (completed, total) {
+          setState(() {
+            _scannedCount = completed;
+            _totalToScan = total;
+          });
+        },
+      )) {
         setState(() => _devices.add(device));
       }
 
@@ -95,7 +105,30 @@ class _ScannerHomeScreenState extends State<ScannerHomeScreen> {
                 style: const TextStyle(color: Colors.red),
               ),
             ),
-          if (_scanning) const LinearProgressIndicator(),
+          if (_scanning)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: _totalToScan == 0
+                          ? null
+                          : _scannedCount / _totalToScan,
+                      minHeight: 6,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Escaneando $_scannedCount / $_totalToScan '
+                    '(${_totalToScan == 0 ? 0 : ((_scannedCount / _totalToScan) * 100).round()}%)',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: _devices.isEmpty && !_scanning
                 ? Center(
