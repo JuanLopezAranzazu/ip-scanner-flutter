@@ -1,16 +1,35 @@
-# ip_scanner
+# IP Scanner Flutter
 
-A new Flutter project.
+Una aplicación móvil desarrollada con Flutter para escanear direcciones IP en una red.
 
-## Getting Started
+## Características
 
-This project is a starting point for a Flutter application.
+- Escaneo de direcciones IP en la red local
+- Detección de dispositivos conectados
+- Información de puertos abiertos
+- Interfaz intuitiva y fácil de usar
 
-A few resources to get you started if this is your first Flutter project:
+## Requisitos
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter SDK
+- Dart
+- Android Studio o Xcode (para emuladores)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Instalación
+
+1. Clonar el repositorio
+2. Ejecutar `flutter pub get`
+3. Conectar un dispositivo o iniciar un emulador
+4. Ejecutar `flutter run`
+
+## Uso
+
+1. Abrir la aplicación en el dispositivo o emulador
+2. Escanear la red local para detectar dispositivos conectados
+3. Visualizar la información de los dispositivos y puertos abiertos
+
+## Tecnologías
+
+- Flutter
+- Dart
+- Network scanning libraries
