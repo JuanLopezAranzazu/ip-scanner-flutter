@@ -80,7 +80,7 @@ class NetworkScanner {
   /// dispositivo), útil para alimentar una barra de progreso real.
   Stream<DeviceInfo> scanNetwork({
     Duration timeout = const Duration(milliseconds: 500),
-    int concurrency = 40,
+    int concurrency = 12,
     void Function(int completed, int total)? onProgress,
   }) async* {
     final prefix = await getSubnetPrefix();
